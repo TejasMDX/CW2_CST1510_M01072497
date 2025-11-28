@@ -38,9 +38,12 @@ def update_incident_status(conn, incident_id, new_status):
 def delete_incident(conn, incident_id):
     cursor = conn.cursor()
     #Write DELETE SQL: DELETE FROM cyber_incidents WHERE id = ?
-    sql = "DELETE FROM cyber_incidents WHERE id = ?"
+    sql = """
+    DELETE FROM cyber_incidents
+    WHERE id = ?
+    """
     #Execute and commit
-    cursor.execute(sql,incident_id)
+    cursor.execute(sql,(incident_id,))
     conn.commit()
     #Return cursor.rowcount
     return cursor.rowcount

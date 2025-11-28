@@ -49,7 +49,7 @@ def run_comprehensive_tests():
     print(f"  Update:  Status updated")
     
     # Delete
-    #delete_incident(conn, test_id)
+    delete_incident(conn, test_id)
     print(f"  Delete:  Incident deleted")
     
     # Test 3: Analytical Queries
