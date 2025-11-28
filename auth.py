@@ -76,16 +76,15 @@ def login_user(username, password):
 
 #Validates username format.
 def validate_username(username):
-    if len(username) < 3 or len(username) > 20 or username.isalpha():
+    if len(username) < 3 or len(username) > 20 or not username.isalpha():
         return False,"Username is not valid"
 
     return True, "Username is valid"
 
 #Validates password strength.
 def validate_password(password):
-    if len(password) < 6 or len(password) > 50 :
+    if len(password) < 6 or len(password) > 50:
         return False,"Password is not valid"
-    
     return True, "Password is valid"
 
 # the main program logic
