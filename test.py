@@ -38,7 +38,7 @@ def run_comprehensive_tests():
     
     # Read
     df = pd.read_sql_query(
-        "SELECT * FROM cyber_incidents WHERE id = ?",
+        "SELECT * FROM cyber_incidents WHERE incident_id = ?",
         conn,
         params=(test_id,)
     )

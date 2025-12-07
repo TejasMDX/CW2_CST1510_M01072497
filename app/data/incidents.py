@@ -1,7 +1,7 @@
 import pandas as pd
 from app.data.db import connect_database
 
-def insert_incident(conn, date, incident_type, severity, status, description, reported_by=None):
+def insert_incident(conn,  timestamp, category, severity, status, description, reported_by=None):
     """Insert new incident."""
     #Get cursor
     cursor = conn.cursor()
@@ -9,9 +9,9 @@ def insert_incident(conn, date, incident_type, severity, status, description, re
     #Execute and commit
     cursor.execute("""
         INSERT INTO cyber_incidents 
-        (date, incident_type, severity, status, description, reported_by)
+        ( timestamp, category, severity, status, description, reported_by)
         VALUES (?, ?, ?, ?, ?, ?)
-    """, (date, incident_type, severity, status, description, reported_by))
+    """, ( timestamp, category, severity, status, description, reported_by))
 
     conn.commit()
     #Return cursor.lastrowid
@@ -20,7 +20,7 @@ def insert_incident(conn, date, incident_type, severity, status, description, re
 def get_all_incidents(conn):
     """Get all incidents as DataFrame."""
     df = pd.read_sql_query(
-        "SELECT * FROM cyber_incidents ORDER BY id DESC",
+        "SELECT * FROM cyber_incidents ORDER BY incident_id DESC",
         conn
     )
     return df
@@ -28,7 +28,7 @@ def get_all_incidents(conn):
 def update_incident_status(conn, incident_id, new_status):
     cursor = conn.cursor()
     #Write UPDATE SQL: UPDATE cyber_incidents SET status = ? WHERE id = ?
-    sql = "UPDATE cyber_incidents SET status = ? WHERE id = ?"
+    sql = "UPDATE cyber_incidents SET status = ? WHERE incident_id = ?"
     #Execute and commit
     cursor.execute(sql,(new_status, incident_id))
     conn.commit()
@@ -40,7 +40,7 @@ def delete_incident(conn, incident_id):
     #Write DELETE SQL: DELETE FROM cyber_incidents WHERE id = ?
     sql = """
     DELETE FROM cyber_incidents
-    WHERE id = ?
+    WHERE incident_id = ?
     """
     #Execute and commit
     cursor.execute(sql,(incident_id,))
@@ -54,9 +54,9 @@ def get_incidents_by_type_count(conn):
     Uses: SELECT, FROM, GROUP BY, ORDER BY
     """
     query = """
-    SELECT incident_type, COUNT(*) as count
+    SELECT category, COUNT(*) as count
     FROM cyber_incidents
-    GROUP BY incident_type
+    GROUP BY category
     ORDER BY count DESC
     """
     df = pd.read_sql_query(query, conn)
@@ -83,11 +83,28 @@ def get_incident_types_with_many_cases(conn, min_count=5):
     Uses: SELECT, FROM, GROUP BY, HAVING, ORDER BY
     """
     query = """
-    SELECT incident_type, COUNT(*) as count
+    SELECT category, COUNT(*) as count
     FROM cyber_incidents
-    GROUP BY incident_type
+    GROUP BY category
     HAVING COUNT(*) > ?
     ORDER BY count DESC
     """
     df = pd.read_sql_query(query, conn, params=(min_count,))
     return df
+
+# Test: Run analytical queries
+conn = connect_database()
+
+print("\n Incidents by Type:")
+df_by_type = get_incidents_by_type_count(conn)
+print(df_by_type)
+
+print("\n High Severity Incidents by Status:")
+df_high_severity = get_high_severity_by_status(conn)
+print(df_high_severity)
+
+print("\n Incident Types with Many Cases (>5):")
+df_many_cases = get_incident_types_with_many_cases(conn, min_count=5)
+print(df_many_cases)
+
+conn.close()

@@ -1,7 +1,7 @@
 import bcrypt
 import os
 
-USER_DATA_FILE = "users.txt"
+USER_DATA_FILE = "DATA/users.txt"
 
 #Implement the Password Hashing Function
 def hash_password(plain_text_password):
@@ -28,7 +28,7 @@ def verify_password(plain_text_password, hashed_password):
     return bcrypt.checkpw(password_bytes, hashed_password_bytes)
 
 #Registers a new user by hashing their password and storing credentials.
-def register_user(username, password):
+def register_user(username, password, role="user"):
     #Check if the username already exists
     if user_exists(username):
         return False
@@ -38,7 +38,7 @@ def register_user(username, password):
 
         # Append the new user to the file
         with open(USER_DATA_FILE, "a") as f:
-            f.write(f"{username},{hashed_password}\n")
+            f.write(f"{username},{hashed_password},{role}\n")
             print(f"Success: User '{username}' registered successfully!")
         return True
 
@@ -98,6 +98,39 @@ def display_menu():
     print("[2] Login")
     print("[3] Exit")
     print("-"*50)
+
+#rates password strength
+def check_password_strength(password):
+    length = len(password)
+    common_password = ["12345678","password","11111111","abcdefgh"]
+
+    has_upper = False
+    has_lower = False
+    has_digit = False
+    has_special = False
+
+    for c in password:
+        if c.isupper() == True and has_upper == False:
+            has_upper = True
+        if c.islower() == True and has_lower == False:
+            has_lower = True
+        if c.isdigit() == True and has_digit == False:
+            has_digit = True
+        if (32<=ord(c) <= 47 or 58<=ord(c) <= 64 or 91<=ord(c) <= 96 or 123<=ord(c) <= 126) and has_special == False:
+            has_special = True
+
+
+    points = sum([has_upper, has_lower, has_digit, has_special])
+
+    if password in common_password:
+        return "Weak"
+    elif length >10 and points == 4:
+        return "Strong"
+    elif points >= 2:
+        return "Medium"
+    else:
+        return "Weak"
+
 def main():
     """Main program loop."""
     print("\nWelcome to the Week 7 Authentication System!")
@@ -125,6 +158,8 @@ def main():
                 print(f"Error: {error_msg}")
                 continue
 
+            print(f"{check_password_strength(password)} Password")
+
             # Confirm password
             password_confirm = input("Confirm password: ").strip()
             if password != password_confirm:
@@ -141,6 +176,7 @@ def main():
             # Login flow
             print("\n--- USER LOGIN ---")
             username = input("Enter your username: ").strip()
+            
             password = input("Enter your password: ").strip()
 
             if not user_exists(username):
@@ -165,8 +201,6 @@ def main():
 
         else:
             print("\nError: Invalid option. Please select 1, 2, or 3.")
-
-
 
 if __name__ == "__main__":
  main()

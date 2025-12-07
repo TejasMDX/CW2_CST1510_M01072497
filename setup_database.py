@@ -1,6 +1,7 @@
 from app.data.schema  import create_all_tables
 from app.services.user_service import migrate_users_from_file
 from app.data.db import connect_database, DB_PATH
+from app.data.datasets import load_all_csv_data
 
 
 def setup_database_complete():
@@ -32,7 +33,7 @@ def setup_database_complete():
     
     # Step 4: Load CSV data
     print("\n[4/5] Loading CSV data...")
-    #total_rows = load_all_csv_data(conn)
+    total_rows = load_all_csv_data(conn)
     
     # Step 5: Verify
     print("\n[5/5] Verifying database setup...")

@@ -26,14 +26,13 @@ def create_cyber_incidents_table(conn):
     #Write CREATE TABLE IF NOT EXISTS SQL statement
     create_table_sql = """
     CREATE TABLE IF NOT EXISTS cyber_incidents (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        date TEXT NOT NULL,
-        incident_type TEXT NOT NULL,
-        severity TEXT NOT NULL,
-        status TEXT NOT NULL,
+        incident_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp TEXT,
+        category TEXT,
+        severity TEXT,
+        status TEXT,
         description TEXT,
-        reported_by TEXT NOT_NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        reported_by TEXT
     )
     """
 
@@ -52,14 +51,12 @@ def create_datasets_metadata_table(conn):
     
     create_table_sql = """
     CREATE TABLE IF NOT EXISTS datasets_metadata (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        dataset_name TEXT NOT NULL,
-        category TEXT,
-        source TEXT,
-        last_update TEXT,
-        record_count INTEGER,
-        file_size_mb REAL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        dataset_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        rows INTEGER,
+        columns INTEGER,
+        uploaded_by TEXT,
+        upload_date TEXT
     )
     """
 
@@ -73,16 +70,12 @@ def create_it_tickets_table(conn):
 
     create_table_sql = """
     CREATE TABLE IF NOT EXISTS it_tickets(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        ticket_id TEXT NOT NULL UNIQUE,
+        ticket_id INTEGER PRIMARY KEY AUTOINCREMENT,
         priority TEXT,
         status TEXT,
-        category TEXT,
-        subject TEXT NOT NULL,
         description TEXT,
-        created_data TEXT NOT NULL,
-        resolved_data TEXT,
-        assigned_to TEXT
+        resolution_time_hours INTEGER,
+        assigned_to TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """
