@@ -4,12 +4,14 @@ from pathlib import Path
 #Create CSV Loading Function
 def load_csv_to_table(conn, csv_path, table_name):
     #Check if CSV file exists
-
+    #Loads data from a CSV file into a specified database table.
+    #Returns the number of rows inserted.
     csv_path = Path(csv_path)
     
     if csv_path.exists():
         print(f"{csv_path} exist")
 
+    # Check whether the CSV file exists
     if not csv_path.exists():
         print(f"Error! {csv_path} does not exist")
         row_count = 0
@@ -19,7 +21,7 @@ def load_csv_to_table(conn, csv_path, table_name):
 
         
 
-        #Use df.to_sql() to insert data
+        # Append DataFrame contents to the database table
         df.to_sql(table_name, conn, if_exists= 'append', index=False)
 
         #Print success message and return row count
@@ -29,6 +31,10 @@ def load_csv_to_table(conn, csv_path, table_name):
     return row_count
     
 def load_all_csv_data(conn):
+
+    #Loads all predefined CSV files into their respective tables.
+    #Returns the total number of rows inserted.
+    
     incidents_path = "DATA/cyber_incidents.csv"
     tickets_path = "DATA/it_tickets.csv"
     metadata_path = "DATA/datasets_metadata.csv"
@@ -51,6 +57,7 @@ def load_all_csv_data(conn):
 
 #CRUD FOR METADATA
 def get_all_metadata(conn):
+    #Retrieves all dataset metadata records as a DataFrame.
     df = pd.read_sql_query(
         "SELECT * FROM datasets_metadata ORDER BY dataset_id DESC",
         conn
@@ -58,6 +65,9 @@ def get_all_metadata(conn):
     return df
 
 def get_dataset_by_uploader_count(conn):
+
+    #Returns dataset counts grouped by uploader.
+    #Demonstrates GROUP BY and ORDER BY usage.
 
     query = """
     SELECT uploaded_by, COUNT(*) as count
@@ -69,6 +79,10 @@ def get_dataset_by_uploader_count(conn):
     return df
 
 def insert_dataset(conn, name, rows, columns, uploaded_by, upload_date):
+
+    #Inserts a new dataset metadata record.
+    #Returns the ID of the inserted dataset.
+
     cursor = conn.cursor()
     cursor.execute("""
         INSERT INTO datasets_metadata 
@@ -80,6 +94,10 @@ def insert_dataset(conn, name, rows, columns, uploaded_by, upload_date):
     return cursor.lastrowid
 
 def update_dataset_rows(conn, dataset_id, new_rows):
+
+    #Updates the row count of a dataset.
+    #Returns the number of affected rows.
+
     cursor = conn.cursor()
 
     sql = "UPDATE datasets_metadata SET rows = ? WHERE dataset_id = ?"
@@ -89,6 +107,10 @@ def update_dataset_rows(conn, dataset_id, new_rows):
     return cursor.rowcount
 
 def delete_dataset(conn, dataset_id):
+
+    #Deletes a dataset metadata record by ID.
+    #Returns the number of deleted rows.
+
     cursor = conn.cursor()
     
     sql = """

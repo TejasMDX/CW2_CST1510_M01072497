@@ -3,6 +3,8 @@ from app.data.db import connect_database
 
 def insert_incident(conn,category, severity, status, description, reported_by=None):
     """Insert new incident."""
+    #Inserts a new cyber incident into the database.
+    #Returns the ID of the newly created incident.
     #Get cursor
     cursor = conn.cursor()
     #Write INSERT SQL with parameterized query
@@ -18,7 +20,7 @@ def insert_incident(conn,category, severity, status, description, reported_by=No
     return cursor.lastrowid
 
 def get_all_incidents(conn):
-    """Get all incidents as DataFrame."""
+    #Retrieves all cyber incidents as a Pandas DataFrame
     df = pd.read_sql_query(
         "SELECT * FROM cyber_incidents ORDER BY incident_id DESC",
         conn
@@ -26,6 +28,8 @@ def get_all_incidents(conn):
     return df
 
 def update_incident_status(conn, incident_id, new_status):
+    # Updates the status of a specific incident.
+    #Returns the number of affected rows.
     cursor = conn.cursor()
     #Write UPDATE SQL: UPDATE cyber_incidents SET status = ? WHERE id = ?
     sql = "UPDATE cyber_incidents SET status = ? WHERE incident_id = ?"
@@ -36,6 +40,8 @@ def update_incident_status(conn, incident_id, new_status):
     return cursor.rowcount
 
 def delete_incident(conn, incident_id):
+    #Deletes a cyber incident by its ID.
+    #Returns the number of deleted rows.
     cursor = conn.cursor()
     #Write DELETE SQL: DELETE FROM cyber_incidents WHERE id = ?
     sql = """
@@ -49,10 +55,8 @@ def delete_incident(conn, incident_id):
     return cursor.rowcount
 
 def get_incidents_by_type_count(conn):
-    """
-    Count incidents by type.
-    Uses: SELECT, FROM, GROUP BY, ORDER BY
-    """
+    #Returns a count of incidents grouped by category.
+    #Demonstrates GROUP BY and ORDER BY usage.
     query = """
     SELECT category, COUNT(*) as count
     FROM cyber_incidents
@@ -63,10 +67,8 @@ def get_incidents_by_type_count(conn):
     return df
 
 def get_high_severity_by_status(conn):
-    """
-    Count high severity incidents by status.
-    Uses: SELECT, FROM, WHERE, GROUP BY, ORDER BY
-    """
+    #eturns counts of HIGH severity incidents grouped by status.
+    #Demonstrates WHERE filtering with GROUP BY.
     query = """
     SELECT status, COUNT(*) as count
     FROM cyber_incidents
@@ -78,10 +80,8 @@ def get_high_severity_by_status(conn):
     return df
 
 def get_incident_types_with_many_cases(conn, min_count=5):
-    """
-    Find incident types with more than min_count cases.
-    Uses: SELECT, FROM, GROUP BY, HAVING, ORDER BY
-    """
+    #Returns incident categories that exceed a minimum case count.
+    #Demonstrates HAVING clause usage.
     query = """
     SELECT category, COUNT(*) as count
     FROM cyber_incidents

@@ -2,6 +2,8 @@ import pandas as pd
 from app.data.db import connect_database
 
 def insert_ticket(conn, priority, description, status, assigned_to, resolution_time_hours):
+    #Inserts a new IT support ticket into the database.
+    #Returns the ID of the newly created ticket.
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -15,6 +17,9 @@ def insert_ticket(conn, priority, description, status, assigned_to, resolution_t
     return cursor.lastrowid
     
 def get_all_tickets(conn):
+
+    #Retrieves all IT tickets as a Pandas DataFrame,
+
     df = pd.read_sql_query(
         "SELECT * FROM it_tickets ORDER BY ticket_id DESC",
         conn
@@ -23,6 +28,8 @@ def get_all_tickets(conn):
     return df
 
 def update_ticket_status(conn, ticket_id, new_status):
+    #Updates the status of a specific IT ticket.
+    #Returns the number of rows affected.
     cursor = conn.cursor()
 
     sql = "UPDATE it_tickets SET status = ? WHERE ticket_id = ?"
@@ -33,6 +40,8 @@ def update_ticket_status(conn, ticket_id, new_status):
     return cursor.rowcount
 
 def delete_ticket(conn, ticket_id):
+    #Deletes an IT ticket using its ticket ID.
+    #Returns the number of deleted rows.
     cursor = conn.cursor()
     
     sql = """
@@ -46,6 +55,8 @@ def delete_ticket(conn, ticket_id):
     return cursor.rowcount
     
 def get_tickets_by_assigned_to_count(conn):
+    #Returns the number of tickets grouped by assigned technician.
+    #Demonstrates GROUP BY and ORDER BY usage.
     query = """
     SELECT assigned_to, COUNT(*) as count
     FROM it_tickets
@@ -56,6 +67,8 @@ def get_tickets_by_assigned_to_count(conn):
     return df
 
 def get_high_piority_by_status(conn):
+    #Returns counts of HIGH priority tickets grouped by status.
+    #Demonstrates WHERE filtering with GROUP BY.
     
     query = """
     SELECT status, COUNT(*) as count
@@ -68,6 +81,8 @@ def get_high_piority_by_status(conn):
     return df
 
 def get_assigned_to_with_many_cases(conn, min_count=5):
+    #Returns technicians assigned to more than a specified number of tickets.
+    #Demonstrates HAVING clause usage.
     query = """
     SELECT assigned_to, COUNT(*) as count
     FROM it_tickets

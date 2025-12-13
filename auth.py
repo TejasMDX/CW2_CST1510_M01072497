@@ -1,6 +1,7 @@
 import bcrypt
 import os
 
+# File where user credentials are stored
 USER_DATA_FILE = "DATA/users.txt"
 
 #Implement the Password Hashing Function

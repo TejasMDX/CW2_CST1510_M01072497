@@ -9,6 +9,8 @@ from app.data.tickets import get_all_tickets,insert_ticket,delete_ticket,update_
 from app.data.datasets import get_all_metadata,update_dataset_rows,delete_dataset,insert_dataset
 from time import sleep
 
+
+#check if user is login
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
@@ -18,6 +20,7 @@ if not st.session_state.logged_in:
         st.switch_page("Home.py")
     st.stop()
 
+#for database connection
 db =DatabaseManager("DATA/intelligence_platform.db")
 db.connect()
 
@@ -25,6 +28,7 @@ st.title("📊Dashboard")
 user = st.session_state.user
 st.success(f"Welcome, {user.get_username()}!")
 
+## Fetch all records
 conn = connect_database('DATA/intelligence_platform.db')
 incidents_rows = get_all_incidents(db)
 tickets_rows = get_all_tickets(db)
@@ -32,18 +36,21 @@ metadata_rows = get_all_metadata(db)
 
 db.close()
 
+# Create Tabs for different sections
 incidents_tab, tickets_tab, datasets_tab = st.tabs(["Incidents", "IT Tickets", "Datasets Metadata"])
 
+# INCIDENTS TAB
 with incidents_tab:
     st.header("All incidents")
-    st.write(incidents_rows)
+    st.write(incidents_rows)  # Display all incidents
 
     st.header("Incident Operations")
     operation = st.selectbox("Operation",["Add Incident","Update Incident Status","Delete Incident"])
 
+     # Handle different operations
     match operation:
         case "Add Incident":
-            #CREATE: Add new incident with a form 
+            #Add new incident with a form 
             with st.form("new_incident"):
                 #form inputs
     
@@ -58,7 +65,7 @@ with incidents_tab:
                 submitted =st.form_submit_button("Add Incident")
 
 
-            #when form is submitted
+            # Insert incident into database
             if submitted:
                 if category and description and severity and status:
               
@@ -67,12 +74,13 @@ with incidents_tab:
                     insert_incident(conn,incident.get_category(),incident.get_severity(),incident.get_status(),incident.get_description(),incident.get_reported_by())
                     st.success("√ Incident added successfully!")
                     sleep(2)
-                    st.rerun()
+                    st.rerun() # Refresh page to show updated data
                 else:
                     st.error("❌Please fill in all required fields: Category, Description, Severity, and Status")
                 
         
         case "Update Incident Status":
+            # Update incident status form
             with st.form("update_incident_status"):
                 incident_id = st.text_input("Incident ID")
                 new_status = st.selectbox("Status",["Open","In Progress", "Resolved"])
@@ -80,6 +88,7 @@ with incidents_tab:
 
                 submitted = st.form_submit_button("Update Incident Status")
 
+            # Update status in database
             if submitted and incident_id and new_status:
                 
                 db =DatabaseManager("DATA/intelligence_platform.db")
@@ -118,6 +127,7 @@ with incidents_tab:
             
         
         case "Delete Incident":
+            # Delete incident form
             with st.form("delete_incident"):
                 incident_id = st.text_input("Incident ID")
 
@@ -152,15 +162,17 @@ with incidents_tab:
                 sleep(2)
                 st.rerun()
 
+# IT TICKETS TAB
 with tickets_tab:
     st.header("All IT Tickets")
-    st.write(tickets_rows)
+    st.write(tickets_rows) # Display all IT tickets
 
     st.header("IT Ticket Operations")
     operation = st.selectbox("Operation",["Add Ticket","Update Ticket Status","Delete Ticket"])
 
     match operation:
         case "Add Ticket":
+             # Add new IT ticket
             with st.form("new_ticket"):
                 priority = st.selectbox("Priority",["Low","Medium","High","Critical"])
                 description = st.text_input("Desciption")
@@ -193,6 +205,7 @@ with tickets_tab:
                 st.rerun()
     
         case "Update Ticket Status":
+            # Update IT ticket status
             with st.form("update_ticket_status"):
                 ticket_id = st.text_input("IT Ticket ID")
                 new_status = st.selectbox("Status",["Open","In Progress", "Resolved","Waiting for User"])
@@ -231,6 +244,7 @@ with tickets_tab:
                 st.rerun()
 
         case "Delete Ticket":
+            # Delete IT ticket
             with st.form("delete_ticket"):
                 ticket_id = st.text_input("IT Ticket ID")
 
@@ -265,15 +279,17 @@ with tickets_tab:
                 sleep(2)
                 st.rerun()
 
+# DATASETS TAB
 with datasets_tab:
     st.header("All Datasets Metadata ")
-    st.write(metadata_rows)
+    st.write(metadata_rows) # Display all dataset metadata
 
     st.header("Datasets Metadata Operations")
     operation = st.selectbox("Operation",["Add Dataset","Update Dataset","Delete Dataset"])
 
     match operation:
         case "Add Dataset":
+            # Add new dataset
             with st.form("new_dataset"):
 
                 name = st.text_input("Name")
@@ -308,6 +324,7 @@ with datasets_tab:
                 st.rerun()
 
         case "Update Dataset":
+            # Update dataset rows
             with st.form("update_dataset"):
 
                 dataset_id = st.text_input("Dataset ID")
@@ -352,6 +369,7 @@ with datasets_tab:
 
 
         case "Delete Dataset":
+            # Delete dataset form
             with st.form("delete_dataset"):
                 dataset_id = st.text_input("Dataset ID")
 
