@@ -1,3 +1,5 @@
+
+
 class User:
     """Represents a user in the Multi-Domain Intelligence Platform."""
     def __init__(self, username: str, password_hash: str, role: str):
@@ -20,3 +22,4 @@ class User:
     
     def __str__(self) -> str:
         return f"User({self.__username}, role={self.__role})"
+    

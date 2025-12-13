@@ -1,12 +1,14 @@
 class ITTicket:
     """Represents an IT support ticket."""
 
-    def __init__(self, ticket_id: int, title: str, priority: str, status: str, assigned_to: str):
-        self.__id = ticket_id
-        self.__title = title
-        self.__priority = priority
-        self.__status = status
-        self.__assigned_to = assigned_to
+    def __init__(self, ticket_id: int, priority: str, description: str, status: str, assigned_to: str, created_at: str, resolution_time_hours: int):
+        self.ticket_id = ticket_id
+        self.priority = priority
+        self.description = description
+        self.status = status
+        self.assigned_to = assigned_to
+        self.created_at = created_at
+        self.resolution_time_hours = resolution_time_hours
 
     def assign_to(self, staff: str) -> None:
         """Assign the ticket to a staff member."""
@@ -14,13 +16,15 @@ class ITTicket:
 
     def close_ticket(self) -> None:
         """Mark the ticket as closed."""
-        self.__status = "Closed"
+        self.status = "Closed"
 
     def get_status(self) -> str:
         return self.__status
 
     def __str__(self) -> str:
         return (
-            f"Ticket {self.__id}: {self.__title} "
-            f"[{self.__priority}] – {self.__status} (assigned to: {self.__assigned_to})"
-        )
+            f"Ticket {self.ticket_id}: {self.description} "
+            f"[{self.priority}] – {self.status} "
+            f"(assigned to: {self.assigned_to}, created at: {self.created_at}, "
+            f"resolution time: {self.resolution_time_hours}h)"
+            )

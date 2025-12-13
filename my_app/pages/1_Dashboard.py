@@ -1,9 +1,16 @@
 import streamlit as st
 from app.data.db import connect_database
+from services.database_manager import DatabaseManager
+from models.security_incident import SecurityIncident
+from models.dataset import Dataset
+from models.it_ticket import ITTicket
 from app.data.incidents import get_all_incidents, insert_incident, delete_incident, update_incident_status
 from app.data.tickets import get_all_tickets,insert_ticket,delete_ticket,update_ticket_status
 from app.data.datasets import get_all_metadata,update_dataset_rows,delete_dataset,insert_dataset
 from time import sleep
+
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
 
 if not st.session_state.logged_in:
     st.error("You must be logged in to view this page")
@@ -11,17 +18,25 @@ if not st.session_state.logged_in:
         st.switch_page("Home.py")
     st.stop()
 
+db =DatabaseManager("DATA/intelligence_platform.db")
+db.connect()
+
 st.title("📊Dashboard")
-st.success(f"Welcome,{st.session_state.username}!")
+user = st.session_state.user
+st.success(f"Welcome, {user.get_username()}!")
 
 conn = connect_database('DATA/intelligence_platform.db')
+incidents_rows = get_all_incidents(db)
+tickets_rows = get_all_tickets(db)
+metadata_rows = get_all_metadata(db)
+
+db.close()
 
 incidents_tab, tickets_tab, datasets_tab = st.tabs(["Incidents", "IT Tickets", "Datasets Metadata"])
 
 with incidents_tab:
     st.header("All incidents")
-    incidents = get_all_incidents(conn)
-    st.dataframe(incidents, use_container_width= True)
+    st.write(incidents_rows)
 
     st.header("Incident Operations")
     operation = st.selectbox("Operation",["Add Incident","Update Incident Status","Delete Incident"])
@@ -31,8 +46,8 @@ with incidents_tab:
             #CREATE: Add new incident with a form 
             with st.form("new_incident"):
                 #form inputs
-                date = st.date_input("Date")
-                title = st.text_input("Incident Title")
+    
+                category = st.text_input("Incident Category")
                 description = st.text_input("Desciption")
                 severity = st.selectbox("Severity",["Low","Medium","High","Critical"])
                 status = st.selectbox("Satus",["Open","In Progress", "Resolved"])
@@ -44,26 +59,63 @@ with incidents_tab:
 
 
             #when form is submitted
-            if submitted and title:
-                #call week8 function itno database
-                insert_incident(conn,date,title,severity,status,description,reported_by)
-                st.success("√ Incident added successfully!")
-                sleep(2)
-                st.rerun()
+            if submitted:
+                if category and description and severity and status:
+              
+                    incident = SecurityIncident(category=category,severity=severity,status=status,description=description,reported_by=reported_by)
+
+                    insert_incident(conn,incident.get_category(),incident.get_severity(),incident.get_status(),incident.get_description(),incident.get_reported_by())
+                    st.success("√ Incident added successfully!")
+                    sleep(2)
+                    st.rerun()
+                else:
+                    st.error("❌Please fill in all required fields: Category, Description, Severity, and Status")
+                
         
         case "Update Incident Status":
             with st.form("update_incident_status"):
                 incident_id = st.text_input("Incident ID")
                 new_status = st.selectbox("Status",["Open","In Progress", "Resolved"])
 
+
                 submitted = st.form_submit_button("Update Incident Status")
 
             if submitted and incident_id and new_status:
                 
-                update_incident_status(conn,incident_id,new_status)
-                st.success("√ Status of incident was updated successfully!")
+                db =DatabaseManager("DATA/intelligence_platform.db")
+                db.connect()
+
+
+                row = db.fetch_one("SELECT incident_id, category, severity, status, description, timestamp, reported_by "
+        "FROM cyber_incidents WHERE incident_id=?",
+        (incident_id,))
+                
+                if row:
+            
+                    incident = SecurityIncident(
+                        incident_id=row[0],
+                        category=row[1],
+                        severity=row[2],
+                        status=row[3],
+                        description=row[4],
+                        timestamp=row[5],
+                        reported_by=row[6]
+                    )
+
+                    incident.update_status(new_status)
+
+                    update_incident_status(conn, incident.get_id(),incident.get_status())
+    
+                    db.close()
+
+                    st.success("√ Status of incident was updated successfully!")
+                    
+                else:
+                    st.error("❌ Incident ID not found. Please check and try again.")
                 sleep(2)
                 st.rerun()
+
+            
         
         case "Delete Incident":
             with st.form("delete_incident"):
@@ -73,15 +125,36 @@ with incidents_tab:
 
             if submitted and incident_id:
                 
-                delete_incident(conn,incident_id)
-                st.success("√ Incident deleted successfully!")
+                db =DatabaseManager("DATA/intelligence_platform.db")
+                db.connect()
+
+                row = db.fetch_one("SELECT incident_id, category, severity, status, description, timestamp, reported_by "
+            "FROM cyber_incidents WHERE incident_id=?",
+            (incident_id,))
+                    
+                if row:
+                
+                    incident = SecurityIncident(
+                        incident_id=row[0],
+                        category=row[1],
+                        severity=row[2],
+                        status=row[3],
+                        description=row[4],
+                        timestamp=row[5],
+                        reported_by=row[6]
+                        )
+                    
+                    delete_incident(conn,incident.get_id())
+                    st.success("√ Incident deleted successfully!")
+                else:
+                    st.error("❌ Incident ID not found. Please check and try again.")
+            
                 sleep(2)
                 st.rerun()
 
 with tickets_tab:
     st.header("All IT Tickets")
-    tickets = get_all_tickets(conn)
-    st.dataframe(tickets, use_container_width= True)
+    st.write(tickets_rows)
 
     st.header("IT Ticket Operations")
     operation = st.selectbox("Operation",["Add Ticket","Update Ticket Status","Delete Ticket"])
@@ -98,8 +171,24 @@ with tickets_tab:
                 submitted =st.form_submit_button("Add Ticket")
 
             if submitted:
-                insert_ticket(conn,priority,description,status,assigned_to,resolution_time_hours)
-                st.success("√ IT Ticket added successfully!")
+                if resolution_time_hours < 1:
+                    st.error("❌ Resolution time in hours must be a greater than 0!")
+                elif description and resolution_time_hours and resolution_time_hours and assigned_to:
+                    ticket = ITTicket(
+                        ticket_id=0,        
+                        priority=priority,
+                        description=description,
+                        status=status,
+                        assigned_to=assigned_to,
+                        created_at="",               
+                        resolution_time_hours=resolution_time_hours
+                    )
+
+                    insert_ticket(conn,ticket.priority,ticket.description,ticket.status,ticket.assigned_to,ticket.resolution_time_hours)
+
+                    st.success("√ IT Ticket added successfully!")
+                else:
+                    st.error("❌ Please enter all the fields")
                 sleep(2)
                 st.rerun()
     
@@ -111,8 +200,33 @@ with tickets_tab:
                 submitted = st.form_submit_button("Update IT Ticket Status")
 
             if submitted:
-                update_ticket_status(conn,ticket_id,new_status)
-                st.success("√ Status of IT Ticket was updated successfully!")
+                db = DatabaseManager("DATA/intelligence_platform.db")
+                db.connect()
+
+                row = db.fetch_one(
+                        "SELECT ticket_id, priority, description, status, assigned_to, created_at, resolution_time_hours "
+                        "FROM it_tickets WHERE ticket_id=?",
+                        (ticket_id,))
+                
+                
+                if row:
+                    ticket = ITTicket(
+                        ticket_id=row[0],
+                        priority=row[1],
+                        description=row[2],
+                        status=row[3],
+                        assigned_to=row[4],
+                        created_at=row[5],
+                        resolution_time_hours=row[6]
+                    )
+
+                    ticket.status = new_status
+                    update_ticket_status(conn, ticket.ticket_id, ticket.status)
+
+                    st.success("√ Status of IT Ticket was updated successfully!")
+                    db.close()
+                else:
+                    st.error("❌ Ticket ID not found. Please check and try again.")
                 sleep(2)
                 st.rerun()
 
@@ -123,15 +237,37 @@ with tickets_tab:
                 submitted = st.form_submit_button("Delete IT Ticket Status")
 
             if submitted and ticket_id:
-                delete_ticket(conn,ticket_id)
-                st.success("√ IT Ticket deleted successfully!")
+
+                db = DatabaseManager("DATA/intelligence_platform.db")
+                db.connect()
+
+                row = db.fetch_one(
+                    "SELECT ticket_id, priority, description, status, assigned_to, created_at, resolution_time_hours "
+                    "FROM it_tickets WHERE ticket_id=?",
+                (ticket_id,))
+
+                if row:
+                    ticket = ITTicket(
+                    ticket_id=row[0],
+                    priority=row[1],
+                    description=row[2],
+                    status=row[3],
+                    assigned_to=row[4],
+                    created_at=row[5],
+                    resolution_time_hours=row[6]
+                )
+
+                    delete_ticket(conn, ticket.ticket_id)
+                    st.success("√ IT Ticket deleted successfully!")
+                    db.close()
+                else:
+                    st.error("❌ Ticket ID not found. Please check and try again.")
                 sleep(2)
                 st.rerun()
 
 with datasets_tab:
     st.header("All Datasets Metadata ")
-    metadata = get_all_metadata(conn)
-    st.dataframe(metadata, use_container_width= True)
+    st.write(metadata_rows)
 
     st.header("Datasets Metadata Operations")
     operation = st.selectbox("Operation",["Add Dataset","Update Dataset","Delete Dataset"])
@@ -143,14 +279,31 @@ with datasets_tab:
                 name = st.text_input("Name")
                 rows = st.number_input("Number of Rows", step=1)
                 columns = st.number_input("Number of Columns", step=1)
-                upload_by = st.text_input("Upload by")
+                uploaded_by = st.text_input("Upload by")
                 upload_date = st.date_input("Upload Date")
                 
                 submitted =st.form_submit_button("Add Dataset")
 
             if submitted:
-                insert_dataset(conn,name,rows,columns,upload_by,upload_date)
-                st.success("√ Dataset added successfully!")
+
+                if rows < 0 or columns < 0 :
+                    st.error("Number of rows and columns cannot be less than 0!")
+                elif name and uploaded_by :
+
+                    dataset = Dataset(
+                        dataset_id=0,         
+                        name=name,
+                        rows=rows,
+                        columns=columns,
+                        uploaded_by=uploaded_by,
+                        upload_date=str(upload_date)
+                    )
+
+                    insert_dataset(conn,dataset.name,dataset.rows,dataset.columns,dataset.uploaded_by,dataset.upload_date)
+
+                    st.success("√ Dataset added successfully!")
+                else:
+                    st.error("❌ Please enter all the fields")
                 sleep(2)
                 st.rerun()
 
@@ -161,10 +314,39 @@ with datasets_tab:
                 new_rows = st.number_input("Number of Rows", step=1)
 
                 submitted = st.form_submit_button("Update Dataset")
+                
 
             if submitted:
-                update_dataset_rows(conn,dataset_id,new_rows)
-                st.success("√ Dataset updated successfully!")
+
+                if new_rows < 0 :
+                    st.error("❌ Number of rows cannot be negative!")
+                else:
+                    db = DatabaseManager("DATA/intelligence_platform.db")
+                    db.connect()
+
+                    row = db.fetch_one(
+                        "SELECT dataset_id, name, rows, columns, uploaded_by, upload_date "
+                        "FROM datasets_metadata WHERE dataset_id=?",
+                        (dataset_id,))
+                    
+                    if row:
+                        dataset = Dataset(
+                        dataset_id=row[0],
+                        name=row[1],
+                        rows=row[2],
+                        columns=row[3],
+                        uploaded_by=row[4],
+                        upload_date=row[5]
+                    )
+                        
+                        dataset.rows = new_rows
+
+                        update_dataset_rows(conn, dataset.dataset_id, dataset.rows)
+
+                        st.success("√ Dataset updated successfully!")
+                        db.close()
+                    else:
+                        st.error("❌ Dataset ID not found. Please check and try again.")
                 sleep(2)
                 st.rerun()
 
@@ -176,7 +358,29 @@ with datasets_tab:
                 submitted = st.form_submit_button("Delete Dataset")
 
             if submitted and dataset_id:
-                delete_dataset(conn,dataset_id)
-                st.success("√ Dataset deleted successfully!")
+
+                db = DatabaseManager("DATA/intelligence_platform.db")
+                db.connect()
+
+                row = db.fetch_one(
+                    "SELECT dataset_id, name, rows, columns, uploaded_by, upload_date "
+                    "FROM datasets_metadata WHERE dataset_id=?",
+                    (dataset_id,))
+                
+                if row:
+                    dataset = Dataset(
+                        dataset_id=row[0],
+                        name=row[1],
+                        rows=row[2],
+                        columns=row[3],
+                        uploaded_by=row[4],
+                        upload_date=row[5]
+                    )
+
+                    delete_dataset(conn, dataset.dataset_id)
+                    st.success("√ Dataset deleted successfully!")
+                    db.close()
+                else:
+                    st.error("❌ Dataset ID not found. Please check and try again.")
                 sleep(2)
                 st.rerun()

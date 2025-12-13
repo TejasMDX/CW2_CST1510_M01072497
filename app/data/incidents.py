@@ -1,7 +1,7 @@
 import pandas as pd
 from app.data.db import connect_database
 
-def insert_incident(conn,  timestamp, category, severity, status, description, reported_by=None):
+def insert_incident(conn,category, severity, status, description, reported_by=None):
     """Insert new incident."""
     #Get cursor
     cursor = conn.cursor()
@@ -9,9 +9,9 @@ def insert_incident(conn,  timestamp, category, severity, status, description, r
     #Execute and commit
     cursor.execute("""
         INSERT INTO cyber_incidents 
-        ( timestamp, category, severity, status, description, reported_by)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, ( timestamp, category, severity, status, description, reported_by))
+        ( category, severity, status, description, reported_by)
+        VALUES (?, ?, ?, ?, ?)
+    """, (category, severity, status, description, reported_by))
 
     conn.commit()
     #Return cursor.lastrowid

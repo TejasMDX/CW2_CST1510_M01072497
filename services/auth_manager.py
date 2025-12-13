@@ -5,12 +5,9 @@ import hashlib  # Replace with bcrypt in real project
 
 class SimpleHasher:
     """Very basic hasher using SHA256 (demo only)."""
-
-    @staticmethod
     def hash_password(plain: str) -> str:
         return hashlib.sha256(plain.encode("utf-8")).hexdigest()
-
-    @staticmethod
+    
     def check_password(plain: str, hashed: str) -> bool:
         return SimpleHasher.hash_password(plain) == hashed
 

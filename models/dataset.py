@@ -1,20 +1,16 @@
 class Dataset:
     """Represents a data science dataset in the platform."""
 
-    def __init__(self, dataset_id: int, name: str, size_bytes: int, rows: int, source: str):
-        self.__id = dataset_id
-        self.__name = name
-        self.__size_bytes = size_bytes
-        self.__rows = rows
-        self.__source = source
-
-    def calculate_size_mb(self) -> float:
-        """Convert bytes to megabytes."""
-        return self.__size_bytes / (1024 * 1024)
-
-    def get_source(self) -> str:
-        return self.__source
+    def __init__(self, dataset_id: int, name: str, rows: int, columns: int, uploaded_by: str, upload_date: str):
+        self.dataset_id = dataset_id
+        self.name = name
+        self.rows = rows
+        self.columns = columns
+        self.uploaded_by = uploaded_by
+        self.upload_date = upload_date
 
     def __str__(self) -> str:
-        size_mb = self.calculate_size_mb()
-        return f"Dataset {self.__id}: {self.__name} ({size_mb:.2f} MB, {self.__rows} rows, source={self.__source})"
+        return (
+            f"Dataset {self.dataset_id}: {self.name} "
+            f"({self.rows} rows, {self.columns} columns, uploaded by {self.uploaded_by} on {self.upload_date})"
+        )

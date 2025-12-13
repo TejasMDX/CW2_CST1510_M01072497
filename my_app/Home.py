@@ -3,20 +3,19 @@ import streamlit as st
 from app.data.users import get_user_by_username, insert_user
 from auth import verify_password,check_password_strength,validate_username,validate_password, hash_password
 from time import sleep
+from models.user import User
 
-st.title("Home")
+st.title("🏠Home")
 
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-if "username" not in st.session_state:
-    st.session_state.username = ""
-
-if "role" not in st.session_state:
-    st.session_state.role = "user"
+if "user" not in st.session_state:
+    st.session_state.user = None
 
 if st.session_state.logged_in:
-    st.success(f"Logged in as **{st.session_state.username}**.")
+    user = st.session_state.user
+    st.success(f"Logged in as **{user.get_username()}** (role: {user.get_role()}).")
 
 
     st.subheader("View Dashboard")
@@ -35,19 +34,21 @@ with tab_login:
     password = st.text_input("Password", type="password", key="login_pass")
 
     if st.button("Log in", type="primary"):
-        user = get_user_by_username(username)
+        user_data = get_user_by_username(username)
 
-        if not user:
+        if not user_data:
             st.error("❌ Username not found.")
         
         else:
-            user_id, db_username, db_hash, role, created = user
+            user_id, db_username, db_hash, role, created = user_data
 
             if verify_password(password, db_hash):
+
+                user_obj = User(username=db_username, password_hash=db_hash, role=role)
+
                 # SUCCESS LOGIN
                 st.session_state.logged_in = True
-                st.session_state.username = db_username
-                st.session_state.role = role
+                st.session_state.user = user_obj
 
                 st.success(f"Welcome back, {db_username}! 🎉")
                 sleep(2)

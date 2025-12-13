@@ -27,7 +27,7 @@ def create_cyber_incidents_table(conn):
     create_table_sql = """
     CREATE TABLE IF NOT EXISTS cyber_incidents (
         incident_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        timestamp TEXT,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         category TEXT,
         severity TEXT,
         status TEXT,

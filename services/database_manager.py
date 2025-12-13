@@ -41,3 +41,8 @@ class DatabaseManager:
         cur = self._connection.cursor()
         cur.execute(sql, tuple(params))
         return cur.fetchall()
+    
+    def cursor(self):
+        if self._connection is None:
+            self.connect()
+        return self._connection.cursor()
